@@ -1,0 +1,51 @@
+name: CI/CD for Next.js
+
+on:
+  push:
+    branches:
+      - main # Exécute la CI/CD à chaque push sur la branche principale
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout le code
+        uses: actions/checkout@v3
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Linter et formatage
+        run: |
+          npm run lint
+          npm run format
+
+      - name: Lancer les tests
+        run: npm run test
+
+      - name: Construire le projet
+        run: npm run build
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Déploie uniquement depuis `main`
+
+    steps:
+      - name: Checkout le code
+        uses: actions/checkout@v3
+
+      - name: Déployer sur Vercel
+        run: |
+          npm install -g vercel
+          vercel --token ${{ secrets.VERCEL_TOKEN }} --prod
